@@ -2,6 +2,7 @@ package org.example.demo_ssr_v0.board;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.example.demo_ssr_v0.user.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -111,6 +112,9 @@ public class BoardController {
      */
     @GetMapping({"/board/list", "/"})
     public String boardList(Model model) {
+
+//        throw new Exception400("예외 테스트 11111");
+
         List<Board> boardList = repository.findAll();
 
         model.addAttribute("boardList", boardList);
