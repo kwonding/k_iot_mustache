@@ -1,8 +1,10 @@
 package org.example.demo_ssr_v0.board;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.demo_ssr_v0.user.User;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
@@ -18,16 +20,21 @@ public class Board {
 
     private String title;
     private String content;
-    private String username;
+
+    // N : 1
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     // pc --> db
     @CreationTimestamp
     private Timestamp createdAt;
 
-    public Board(String title, String content, String username) {
+    @Builder
+    public Board(String title, String content, User user) {
         this.title = title;
         this.content = content;
-        this.username = username;
+        this.user = user;
     }
 
     // Board 상태값 수정하는 로직
@@ -37,7 +44,13 @@ public class Board {
 
         this.title = updateDto.getTitle();
         this.content = updateDto.getContent();
-        this.username = updateDto.getUsername();
+        // 게시글 수정은 작성자를 변경할 수 없다.
+        // this.user = updateDto.getUsername();
+    }
+
+    // 게시글 소유자 확인 로직
+    public boolean isOwner(Long userId) {
+        return this.user.getId().equals(userId);
     }
 
     // 개별 필드 수정 - title
