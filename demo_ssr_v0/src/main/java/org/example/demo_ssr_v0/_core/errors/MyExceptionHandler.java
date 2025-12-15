@@ -40,7 +40,7 @@ public class MyExceptionHandler {
     @ExceptionHandler(Exception401.class)
     @ResponseBody
     public ResponseEntity<String> ex401(Exception401 e, HttpServletRequest request) {
-        String script = "<script>alert('"+e.getMessage()+"');" +
+        String script = "<script>alert('" + e.getMessage() + "');" +
                 "history.back();" +
                 "</script>";
 

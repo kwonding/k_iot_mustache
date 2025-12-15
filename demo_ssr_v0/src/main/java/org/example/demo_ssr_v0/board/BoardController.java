@@ -38,10 +38,8 @@ public class BoardController {
 
         // 1. 인증 검사 (O) - 로그인
         User sessionUser = (User) session.getAttribute("sessionUser"); // sessionUSer -> 상수로 빼면 좋음
-        if (sessionUser == null) {
-            System.out.println("로그인 안한 사용자의 요청이 들어옴");
-            return "redirect:/login";
-        }
+        // LoginInterceptor 가 알아서 처리 해줌! 위의 코드는 밑에서 조회해야해서 살려둠
+
 
         // 2. 인가 검사 (O)
         Board board = repository.findById(id);
@@ -80,9 +78,7 @@ public class BoardController {
     ) {
         // 1. 인증 처리
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            throw new Exception401("로그인 후 사용할 수 있습니다.");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌!
 
         // 2. 권한 체크
         // 조회
@@ -125,9 +121,7 @@ public class BoardController {
     @GetMapping("/board/save")
     public String saveForm(HttpSession session) {
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            throw new Exception401("로그인 후 사용 가능합니다.");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌!
 
         return "board/save-form";
     }
@@ -146,9 +140,7 @@ public class BoardController {
 
         // 1. 인증 처리
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            throw new Exception401("로그인 후 사용 가능합니다.");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌!
 
         Board board = saveDto.toEntity(sessionUser);
         repository.save(board);
@@ -188,9 +180,7 @@ public class BoardController {
     public String deleteForm(@PathVariable Long id, HttpSession session) {
         // 1. 인증 처리
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            throw new Exception401("로그인 후 사용 가능합니다.");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌!
 
         // 2. 인가 처리 || 관리자 권한
         // 조회

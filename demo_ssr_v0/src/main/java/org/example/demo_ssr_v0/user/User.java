@@ -46,4 +46,10 @@ public class User {
         // 더티 체킹 (변경 감지)
         // 트랜잭션이 끝나면 자동으로 update 쿼리 진행
     }
+
+    // 회원 정보 소유자 확인 로직
+    public boolean isOwner(Long userId) {
+        return this.id.equals(userId);
+    }
+
 }
