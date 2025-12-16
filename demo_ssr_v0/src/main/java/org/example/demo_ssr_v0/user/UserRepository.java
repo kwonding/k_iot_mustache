@@ -7,17 +7,13 @@ import java.util.Optional;
 // JpaRepository -> @Repository 있음 -> IoC 됨
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // 쿼리 메서드 네이밍
+    // 쿼리 메서드 네이밍 (자동 쿼리 생성)
     // - findBy: 조회 시작
     // - Username: 엔티티의 username 필드명 일치
     // - Optional: 결과가 없을 수 있으므로 Optional 반환 NullSafety
-
     Optional<User> findByUsername(String username);
     Optional<User> findByUsernameAndPassword(String username, String password);
     // SELECT * FROM user_tb WHERE username = ? AND password = ?
-
-    // JPQL (객체 쿼리)
-    // ... ... ... Query DSL
 
     /**
      * JpaRepository에서 자동 제공되는 메서드들:

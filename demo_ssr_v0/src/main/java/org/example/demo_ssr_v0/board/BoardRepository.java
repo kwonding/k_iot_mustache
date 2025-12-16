@@ -1,8 +1,11 @@
 package org.example.demo_ssr_v0.board;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
@@ -16,6 +19,14 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     // 전체 조회
     // SELECT * FROM board_tb ORDER BY created_at DESC
-    List<Board> findAllByOrderByCreatedAtDesc();
+    // LAZY 로딩이라서 한번에 username을 가져와야 함
+    // JOIN FETCH
 
+    // 게시글 전체 조회 (작성자 정보 포함, JOIN FETCH 사용)
+    @Query("SELECT b FROM Board b JOIN FETCH b.user ORDER BY b.createdAt DESC")
+    List<Board> findAllByWithUserOrderByCreatedAtDesc();
+
+    // 게시글 ID로 조회 (작성자 정보 포함 - JOIN FETCH 사용)
+    @Query("SELECT b FROM Board b JOIN FETCH b.user WHERE b.id = :id")
+    Optional<Board> findByIdWithUser(@Param("id") Long id);
 }

@@ -4,7 +4,6 @@ package org.example.demo_ssr_v0.user;
 
 import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.Exception400;
-import org.example.demo_ssr_v0._core.errors.exception.Exception401;
 import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
 import org.springframework.stereotype.Service;
@@ -30,10 +29,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true) // 가벼운 Transactional
 public class UserService {
 
+    // 객체 지향 개념 --> SOLID 원칙
+    // DIP - 추상화가 높은 녀석을 선언하는 것이 좋다.
     private final UserRepository userRepository;
 
+    @Transactional
     public User 회원가입(UserRequest.JoinDTO joinDTO) {
 
+        joinDTO.validate();
         // 1. 사용자명 중복 체크
         if (userRepository.findByUsername(joinDTO.getUsername()).isPresent()) {
             // isPresent -> 있으면 true 반환, 없으면 false 반환

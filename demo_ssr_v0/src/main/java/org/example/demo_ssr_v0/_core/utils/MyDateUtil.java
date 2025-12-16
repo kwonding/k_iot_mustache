@@ -8,7 +8,7 @@ public class MyDateUtil {
     // 정적 메서드 (기능) 시간 포맷터
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static String timestamp(Timestamp timestamp) {
+    public static String timestampFormat(Timestamp timestamp) {
         // timestamp 받아서 원하는 형태로 변환
         if (timestamp == null) return null;
         return timestamp.toLocalDateTime().format(FORMATTER);

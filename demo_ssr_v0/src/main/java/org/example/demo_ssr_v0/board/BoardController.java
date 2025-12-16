@@ -17,7 +17,7 @@ import java.util.List;
 public class BoardController {
 
 //    @Autowired // 의존성 주입 방법 1
-    private final BoardPersistRepository repository;
+    private final BoardService boardService;
 
     // 생성자 의존 주입 방법 2
 //    public BoardController(BoardPersistRepository boardPersistRepository) {
@@ -40,21 +40,8 @@ public class BoardController {
         User sessionUser = (User) session.getAttribute("sessionUser"); // sessionUSer -> 상수로 빼면 좋음
         // LoginInterceptor 가 알아서 처리 해줌! 위의 코드는 밑에서 조회해야해서 살려둠
 
-
         // 2. 인가 검사 (O)
-        Board board = repository.findById(id);
-        if (board == null) {
-            throw new Exception500("게시글이 삭제 되었습니다.");
-        }
-
-        if (!board.isOwner(sessionUser.getId())) {
-            throw new Exception403("해당 게시글의 수정 권한이 없습니다.");
-        }
-
-//        if (board.getUser().getId().equals(sessionUser.getId()) == false) {
-//            System.out.println("권한 없음");
-//            throw new RuntimeException("수정 권한 없습니다");
-//        }
+        BoardResponse.UpdateFormDTO board = boardService.게시글수정화면(id, sessionUser.getId());
 
         model.addAttribute("board", board);
 //        request.setAttribute("board", board);
@@ -76,24 +63,12 @@ public class BoardController {
             BoardRequest.UpdateDto updateDto,
             HttpSession session
     ) {
-        // 1. 인증 처리
+        // 인증 처리
         User sessionUser = (User) session.getAttribute("sessionUser");
         // LoginInterceptor 가 알아서 처리 해줌!
 
-        // 2. 권한 체크
-        // 조회
-        Board board = repository.findById(id);
-
-        if (!board.isOwner(sessionUser.getId())) {
-            throw new Exception403("해당 게시글의 수정 권한이 없습니다.");
-        }
-
-        try {
-            repository.updateById(id, updateDto);
-            // 더티 체킹 활용
-        } catch (Exception e) {
-            throw new RuntimeException("게시글 수정 실패");
-        }
+        updateDto.validate();
+        boardService.게시글수정(updateDto, id, sessionUser.getId());
 
         return "redirect:/board/list";
     }
@@ -105,8 +80,7 @@ public class BoardController {
      */
     @GetMapping({"/board/list", "/"})
     public String boardList(Model model) {
-        List<Board> boardList = repository.findAll();
-
+        List<BoardResponse.ListDTO> boardList = boardService.게시글목록조회();
         model.addAttribute("boardList", boardList);
 
         return "board/list";
@@ -138,12 +112,12 @@ public class BoardController {
         // HTTP 요청 : username=값&title=값&Content=값
         // 스프링이 처리 : new SaveDto 객체 생성 후 setter 메서드 호출해서 값을 쏙 넣어줌
 
-        // 1. 인증 처리
+        // 1. 인증 검사 - 인터셉터
         User sessionUser = (User) session.getAttribute("sessionUser");
         // LoginInterceptor 가 알아서 처리 해줌!
 
-        Board board = saveDto.toEntity(sessionUser);
-        repository.save(board);
+        // 2. 유효성검사 (형식), 논리적인 검사는 (서비스단)
+        boardService.게시글작성(saveDto, sessionUser);
 
         return "redirect:/";
     }
@@ -156,14 +130,19 @@ public class BoardController {
      */
     // http://localhost:8080/board/1
     @GetMapping("/board/{id}")
-    public String getBoardById(@PathVariable Long id, Model model) {
+    public String detail(@PathVariable Long id, Model model, HttpSession session) {
 
-        Board board = repository.findById(id);
-        if (board == null) {
-            // 404 Not Found
-            throw new Exception404("게시글을 찾을 수 없습니다.");
+        BoardResponse.DetailDTO board = boardService.게시글상세조회(id);
+
+        // 세션에 로그인 사용자 정보 조회(없을 수도 있음)
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        boolean isOwner = false;
+        // 응답 DTO에 담겨있는 정보와 SessionUser 담겨 있는 정보를 확인하여 처리 가능
+        if (sessionUser != null && board.getUserId() != null) {
+            isOwner = board.getUserId().equals(sessionUser.getId()); // isOwner에 true/false 담김
         }
 
+        model.addAttribute("isOwner", isOwner);
         model.addAttribute("board", board);
 
         return "/board/detail";
@@ -184,12 +163,7 @@ public class BoardController {
 
         // 2. 인가 처리 || 관리자 권한
         // 조회
-        Board board = repository.findById(id);
-        if (!board.isOwner(sessionUser.getId())) {
-            throw new Exception403("삭제 권한이 없습니다.");
-        }
-
-        repository.deleteById(id);
+        boardService.게시글삭제(id, sessionUser.getId());
 
         return "redirect:/";
     }
