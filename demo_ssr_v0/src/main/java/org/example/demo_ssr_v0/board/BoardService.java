@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
+import org.example.demo_ssr_v0.reply.ReplyRepository;
 import org.example.demo_ssr_v0.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final ReplyRepository replyRepository;
 
     /**
      * 페이징 처리
@@ -148,6 +150,8 @@ public class BoardService {
         if (!boardEntity.isOwner(sessionUserId)) {
             throw new Exception403("게시글 삭제 권한이 없습니다.");
         }
+
+        replyRepository.deleteByBoardId(boardId); // 댓글 먼저 삭제 후 게시물 삭제 가능
 
         // 4
         boardRepository.deleteById(boardId);

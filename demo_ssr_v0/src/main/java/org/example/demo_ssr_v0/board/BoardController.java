@@ -150,7 +150,7 @@ public class BoardController {
 
     /**
      * 게시글 상세보기 화면 요청
-     * @param id
+     * @param boardId
      * @param model
      * @return
      */
