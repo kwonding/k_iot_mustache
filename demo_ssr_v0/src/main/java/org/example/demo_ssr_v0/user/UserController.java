@@ -2,8 +2,6 @@ package org.example.demo_ssr_v0.user;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.example.demo_ssr_v0._core.errors.exception.Exception403;
-import org.example.demo_ssr_v0._core.errors.exception.Exception404;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
