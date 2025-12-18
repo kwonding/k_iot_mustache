@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
+import org.example.demo_ssr_v0._core.utils.FileUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,25 @@ public class UserService {
             // isPresent -> 있으면 true 반환, 없으면 false 반환
             throw new Exception400("이미 존재하는 사용자 이름입니다");
         }
-        User user = joinDTO.toEntity();
+
+        String profileImageFilename = null;
+
+        // 2. 회원 가입시 파일이 넘어 왔는지 확인
+        if (joinDTO.getProfileImage() != null) {
+
+            // 2-1 유효성 검사(이미지 파일인지 아닌지)
+            try {
+                if (!FileUtil.isImageFile(joinDTO.getProfileImage())) {
+                    throw new Exception400("이미지 파일만 업로드 가능합니다.");
+                }
+                // User 엔티티에 저장할 때는 String 이여야 하고 null 값도 가질 수 있음
+                profileImageFilename = FileUtil.saveFile(joinDTO.getProfileImage());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        User user = joinDTO.toEntity(profileImageFilename);
         return userRepository.save(user);
     }
 

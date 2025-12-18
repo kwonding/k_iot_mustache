@@ -28,7 +28,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 //    @Query("SELECT b FROM Board b JOIN FETCH b.user ORDER BY b.createdAt DESC")
 //    List<Board> findAllByWithUserOrderByCreatedAtDesc();
 
-    // 게시글 전체 조회 (페이징 처리) - 인수값은 우리가 생성한 Pageable 객체를 넣어 주면 됨
+    // 게시글 전체 조회 (페이징 처리) - 검색어 없을때 사용
+    // - 인수값은 우리가 생성한 Pageable 객체를 넣어 주면 됨
     /**
      *
      * @param pageable 페이징 정보있음 (페이지 번호, 크기, 정렬)
@@ -40,6 +41,21 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query(value = "SELECT b FROM Board b JOIN FETCH b.user ORDER BY b.createdAt DESC",
     countQuery = "SELECT COUNT(DISTINCT b) FROM Board b")
     Page<Board> findAllByWithUserOrderByCreatedAtDesc(Pageable pageable);
+
+    /**
+     * 게시글 검색(제목 또는 내용, 페이징 포함) - 검색어 있을 때 사용
+     * @param keyword
+     * @param pageable
+     * @return
+     */
+    @Query(value = "SELECT DISTINCT b FROM Board b JOIN FETCH b.user " +
+            "WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "   OR LOWER(b.content) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "ORDER BY b.createdAt DESC",
+            countQuery = "SELECT COUNT(DISTINCT b) FROM Board b " +
+                    "WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "   OR LOWER(b.content) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Board> findByTitleContainingOrContentContaining(@Param("keyword") String keyword, Pageable pageable);
 
     // 게시글 ID로 조회 (작성자 정보 포함 - JOIN FETCH 사용)
     @Query("SELECT b FROM Board b JOIN FETCH b.user WHERE b.id = :id")

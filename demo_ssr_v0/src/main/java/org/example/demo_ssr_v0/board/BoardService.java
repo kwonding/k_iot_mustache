@@ -28,7 +28,7 @@ public class BoardService {
      * 페이징 처리
      * @return
      */
-    public BoardResponse.PageDTO 게시글목록조회(int page, int size) {
+    public BoardResponse.PageDTO 게시글목록조회(int page, int size, String keyword) {
 
         // page는 0부터 시작
         // 상한선 제한 코드
@@ -42,8 +42,14 @@ public class BoardService {
         // 정렬 기준
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(validPage, validSize, sort);
+        // [ ..스프링.. ] [검색][초기화]
 
-        Page<Board> boardPage = boardRepository.findAllByWithUserOrderByCreatedAtDesc(pageable);
+        Page<Board> boardPage;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            boardPage = boardRepository.findByTitleContainingOrContentContaining(keyword, pageable);
+        } else {
+            boardPage = boardRepository.findAllByWithUserOrderByCreatedAtDesc(pageable);
+        }
 
         return new BoardResponse.PageDTO(boardPage);
 
@@ -65,23 +71,23 @@ public class BoardService {
 //        // 데이터 타입을 변환해서 맞춰 주어야 함
 //        // List<Board> ---> List<BoardResponse.ListDTO>
 //        // 1. 반복문 활용
-////        List<BoardResponse.ListDTO> dtoList = new ArrayList<>(); // 비어있는 객체 생성
-////        for (Board board: boardList) {
-////            BoardResponse.ListDTO dto = new BoardResponse.ListDTO(board); // 객체 하나 생성됨
-////            dtoList.add(dto);
-////        }
+//        List<BoardResponse.ListDTO> dtoList = new ArrayList<>(); // 비어있는 객체 생성
+//        for (Board board: boardList) {
+//            BoardResponse.ListDTO dto = new BoardResponse.ListDTO(board); // 객체 하나 생성됨
+//            dtoList.add(dto);
+//        }
 //
 //        // 2. 람다 표현식
-////        return boardList.stream()
-////                .map(board -> new BoardResponse.ListDTO(board))
-////                .collect(Collectors.toList());
+//        return boardList.stream()
+//                .map(board -> new BoardResponse.ListDTO(board))
+//                .collect(Collectors.toList());
 //
 //        // 3. 참조 메서드
 //        return boardList.stream()
 //                .map(BoardResponse.ListDTO::new)
 //                .collect(Collectors.toList());
 //
-////        return dtoList;
+//        return dtoList;
 //    }
 
     public BoardResponse.DetailDTO 게시글상세조회(Long boardId) {
