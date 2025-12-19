@@ -13,7 +13,7 @@ public class FileUtil {
 
     // 이미지 저장 경로
     // 프로젝트 루트 폴더 아래에 images/ 폴더를 생성할 예정 (프로필 이미지만 넣을 예정)
-    public static final String IMAGES_DIR = "images/";
+    public static final String IMAGES_DIR = "C:/uploads/";
 
     public static String saveFile(MultipartFile file) throws IOException {
         return saveFile(file, IMAGES_DIR);
@@ -71,6 +71,27 @@ public class FileUtil {
         String contentType = file.getContentType();
         // Content-Type이 image/ 로 시작 하는지 확인
         return contentType != null && contentType.startsWith("image/");
+    }
+
+    // 프로필 이미지 삭제 처리
+    public static void deleteFile (String filename) throws IOException{
+        deleteFile(filename, IMAGES_DIR);
+    }
+
+    public static void deleteFile(String filename, String uploadDir) throws IOException{
+        // 방어적 코드(파일 이름이 없다면 삭제할 것이 없음)
+        if (filename == null || filename.isEmpty()) {
+            return;
+        }
+
+        // 삭제할 파일의 전체 경로를 생성해야함(C:/uploads)
+        // file:///C:/uploads/ + a.png (경로 + 파일이름)
+        Path filePath = Paths.get(uploadDir, filename); // 경로 가지고 오기
+        if (Files.exists(filePath)) {
+            Files.delete(filePath);
+        }
+        // 파일이 없으면 그냥 종료
+
     }
 
 }

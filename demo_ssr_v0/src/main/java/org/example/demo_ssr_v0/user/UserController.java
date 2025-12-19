@@ -22,6 +22,33 @@ public class UserController {
 
     private final UserService userService;
 
+    // 프로필 이미지 삭제하기
+    @PostMapping("/user/profile-image/delete")
+    public String deleteProfileImage(HttpSession session) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+
+        User updateUser = userService.프로필이미지삭제(sessionUser.getId());
+        // 왜 user를 다시 받을까? - 세션 정보가 (즉 프로필이 삭제 되었기 때문에)
+        // 세션 정보 갱신 처리해주기 위함
+        session.setAttribute("sessionUser", updateUser); // 세션 정보 갱신
+
+        // 일반적으로 POST 요청오면 PRG 패턴으로 설계 됨
+        // POST -> Redirect 처리 --> GET 요청
+        return "redirect:/user/detail";
+    }
+
+    // 마이페이지
+    // http://localhost:8080/user/detail
+    @GetMapping("/user/detail")
+    public String detailForm(Model model, HttpSession session) {
+        User sessionUser = (User)session.getAttribute("sessionUser");
+
+        User user = userService.마이페이지(sessionUser.getId());
+        model.addAttribute("user", user);
+
+        return "user/detail";
+    }
+
     // 회원 정보 수정 화면 요청
     // http://localhost:8080/user/update
     @GetMapping("/user/update")

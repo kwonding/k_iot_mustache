@@ -10,6 +10,8 @@ import org.example.demo_ssr_v0._core.utils.FileUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+
 /**
  * 사용자 서비스 레이어
  *
@@ -111,4 +113,44 @@ public class UserService {
         return userEntity;
     }
 
+    public User 마이페이지(Long sessionUserId) {
+
+        User user = userRepository.findById(sessionUserId)
+                .orElseThrow(() -> new Exception404("해당 사용자를 찾을 수 없습니다."));
+
+        // 인가 처리
+        if(!user.isOwner(sessionUserId)) {
+            throw new Exception403("권한이 없습니다.");
+        }
+
+        return user;
+    }
+
+    @Transactional
+    public User 프로필이미지삭제(Long sessionUserId) {
+        // 1. 회원 정보 조회
+        // 2. 회원 정보와 세션 id 값이 같은지 판단 (인가 처리)
+        // 3. 프로필 이미지가 있다면 삭제 (FileUtil) 헬퍼 클래스 사용 (디스크에서 삭제)
+        // 4. DB 에서 프로필 이름 null로 업데이트 처리
+        User userEntity = userRepository.findById(sessionUserId)
+                .orElseThrow(() -> new Exception404("해당 사용자를 찾을 수 없습니다."));
+
+        if (!userEntity.isOwner(sessionUserId)) {
+            throw new Exception403("권한이 없습니다.");
+        }
+
+        String profileImage = userEntity.getProfileImage();
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                FileUtil.deleteFile(profileImage); // throws IOException 때문에 try-catch해줘야함
+            } catch (IOException e) {
+                System.err.println("프로필 이미지 파일 삭제 실패");
+            }
+        }
+        // 객체 상태값 변경 (트랜잭션이 끝나는 시점에 더티체킹 됨)
+        userEntity.setProfileImage(null);
+
+        return userEntity;
+    }
 }

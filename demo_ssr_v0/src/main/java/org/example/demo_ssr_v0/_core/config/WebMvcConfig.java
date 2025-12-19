@@ -6,6 +6,7 @@ import org.example.demo_ssr_v0._core.interceptor.LoginInterceptor;
 import org.example.demo_ssr_v0._core.interceptor.SessionInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -17,14 +18,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-//    @Autowired
     private final LoginInterceptor loginInterceptor;
     private final SessionInterceptor sessionInterceptor;
-
-    // DI 처리 (생성자 의존 주입 받음)
-//    public WebMvcConfig(LoginInterceptor loginInterceptor) {
-//        this.loginInterceptor = loginInterceptor;
-//    }
 
     // ps. 인터셉터는 당연히 여러개 등록 가능 함
     @Override
@@ -56,6 +51,27 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 );
         // \\d+ 는 정규 표현식으로 1개 이상의 숫자를 의미함
         // /board/1, board/1234 <-- 허용
-        // /board/abc 같은 경우 매칭되지 않음
+        // /board/abc 같은 경우 매칭되지 않음\
+        }
+
+    /**
+     * 정적 리소스 핸들러
+     * 업로드된 이미지 파일을 웹에서 접근할 수 있도록 설정합니다.
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+
+        /**
+         *  /images/** 경로로 요청이 들어오면 나의 폴더 images/ 디렉토리에서 찾게 설정합니다
+         */
+        // 머스태치 이미지 태그에 src 경로에 /images/** 같은 경로로 설정 되어 있다면
+        // 스프링이 알아서 내 폴더 file:(프로젝트 루트 디렉토리)안에 images/ 폴더를 찾게 한다.
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("file:///C:/uploads/");
+        //** file:/// 문법설명
+        // file: 파일 시스템을 가리킴
+        // 파일 시스템에서 절대 경로를 의미하는 URI 표기법은 -> ///:
+        // file:images/ 앞에 슬러시가 없기 때문에 상대경로를 의미함
+        // file:///D:upload/ <-- 내 컴퓨터 절대 경로를 의미함
     }
 }
