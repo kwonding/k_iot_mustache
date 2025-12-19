@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
+import org.example.demo_ssr_v0._core.errors.exception.Exception500;
 import org.example.demo_ssr_v0._core.utils.FileUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,9 +108,39 @@ public class UserService {
             throw new Exception403("회원정보 수정 권한이 없습니다.");
         }
 
+        // 추가 - 프로필 이미지 처리
+        // 중요 : 우리 프로젝트에서는 이미지 수정도 선택 사항
+        // 새로운 이미지 파일을 생성하고 기존에 있던 이미지 파일을 삭제해야 함
+        // 추가로 DB 정보도 업데이트 해야함
+
+        String oldProfileImage = userEntity.getProfileImage();
+        // 분기 처리 - 이미지명이 있거나 또는 null 값
+        if (updateDTO.getProfileImage() != null && !updateDTO.getProfileImage().isEmpty()) { // 회원수정 요청했다는 말임
+            // 1. 이미지 파일인지 검증
+            if (!FileUtil.isImageFile(updateDTO.getProfileImage())) {
+                throw new Exception400("이미지 파일만 업로드 가능합니다.");
+            }
+
+            // 2. 새 이미지 저장
+            try {
+                String newProfileImageFilename = FileUtil.saveFile(updateDTO.getProfileImage());
+                // 새로 만들어진 파일 이름을 잠시 DTO에 보관 함
+                updateDTO.setProfileImageFilename(newProfileImageFilename);
+
+                if (oldProfileImage != null && !oldProfileImage.isEmpty()) {
+                    // 기존에 있던 이미지를 삭제 처리함
+                    FileUtil.deleteFile(oldProfileImage);
+                }
+            } catch (IOException e) {
+                throw new Exception500("파일 저장에 실패했습니다.");
+            } // end of 파일이 들어왔을 때 처리
+        } else {
+            // 새 이미지가 업로드 되지 않았으면 기존 이미지 파일 이름 유지
+            updateDTO.setProfileImageFilename(oldProfileImage);
+        }
+
         // 객체 상태값 변경 (트랜잭션이 끝나면 자동으로 commit 및 변경해줄거야)
         userEntity.update(updateDTO);
-
         return userEntity;
     }
 
@@ -143,7 +174,7 @@ public class UserService {
 
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                FileUtil.deleteFile(profileImage); // throws IOException 때문에 try-catch해줘야함
+                FileUtil.deleteFile(profileImage); // throws IOException 때문에 try-catch 해줘야함
             } catch (IOException e) {
                 System.err.println("프로필 이미지 파일 삭제 실패");
             }

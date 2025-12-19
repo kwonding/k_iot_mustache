@@ -63,6 +63,8 @@ public class UserRequest {
     @Data
     public static class UpdateDTO {
         private String password;
+        private MultipartFile profileImage; // mustache 파일의 form에 name과 동일해야 함
+        private String profileImageFilename; // 추후 user.update 메서드에서 사용 함
         // username은 제외: 변경 불가능한 고유 식별자
 
         public void validate() {
