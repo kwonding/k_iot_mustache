@@ -9,6 +9,11 @@ INSERT INTO user_tb (username, password, email, created_at) VALUES
 -- 2단계: Board 테이블 데이터 (10개의 게시글)
 -- 주의: user_id는 위에서 생성된 사용자의 id를 참조
 
+-- UserRole 테이블 데이터 (사용자 역할: ADMIN / USER)
+INSERT INTO user_role_tb (role, user_id) VALUES
+                                             ('ADMIN', 1), ('USER', 1),
+                                             ('USER', 2), ('USER', 3), ('USER', 4), ('USER', 5);
+
 -- admin 사용자가 작성한 게시글 (3개)
 INSERT INTO board_tb (title, content, user_id, created_at) VALUES
                                                                ('블로그 개설을 환영합니다!', '안녕하세요! 새로운 블로그가 오픈했습니다. 많은 관심과 참여 부탁드립니다.', 1, NOW()),

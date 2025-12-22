@@ -1,6 +1,8 @@
 package org.example.demo_ssr_v0.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -12,8 +14,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // - Username: 엔티티의 username 필드명 일치
     // - Optional: 결과가 없을 수 있으므로 Optional 반환 NullSafety
     Optional<User> findByUsername(String username);
-    Optional<User> findByUsernameAndPassword(String username, String password);
     // SELECT * FROM user_tb WHERE username = ? AND password = ?
+//    Optional<User> findByUsernameAndPassword(String username, String password);
+
+    /**
+     * 로그인 시 역할(ROLE) 정보까지 함께 조회되는 메서드
+     * - 세션에 저장된 User 객체에서 isAdmin(), getRoleDisplay() 등을 바로 사용할 수 있음
+     */
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles r " +
+            "WHERE u.username = :username AND u.password = :password")
+    Optional<User> findByUsernameAndPasswordWithRoles(@Param("username") String username, @Param("password") String password);
 
     /**
      * JpaRepository에서 자동 제공되는 메서드들:
