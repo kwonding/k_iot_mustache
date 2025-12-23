@@ -4,14 +4,14 @@
     <!-- 요청을 하면 localhost:8080/join POST로 요청됨
     username=사용자입력값&password=사용자값&email=사용자입력값 -->
 
-    <div class="card">
-        <div class="card-header"><b>회원수정을 해주세요</b></div>
+<div class="card">
+    <div class="card-header"><b>회원수정을 해주세요</b></div>
         <div class="card-body">
 
             <div class="text-center mb-4">
                 {{#user.profileImage}}
                 {{! src 경로가 /images/!, 스프링에 등록한 리소스 핸들러가 동작함}}
-                    <img src="/images/{{user.profileImage}}" alt="프로필 사진" class="rounded-circle border"
+                    <img src="{{user.profilePath}}" alt="프로필 사진" class="rounded-circle border"
                          style="width: 200px; height: 200px; object-fit: cover">
                 {{/user.profileImage}}
                 {{^user.profileImage}}
@@ -27,6 +27,7 @@
                 <div class="mb-3">
                     <input type="text" class="form-control" placeholder="Enter username" name="username" value="{{user.username}}">
                 </div>
+                {{#user.local}}
                 <div class="mb-3">
                     <input type="password" class="form-control" placeholder="Enter password" name="password" required>
                 </div>
@@ -38,6 +39,7 @@
                     <input type="file" class="form-control" id="profileImage" name="profileImage" accept="image/*">
                     <small class="form-text text-muted mt-1">이미지 파일만 업로드 가능합니다.(JPG, PNG, GIF 등)</small>
                 </div>
+                {{/user.local}}
                 <button type="submit" class="btn btn-primary form-control">회원정보수정</button>
             </form>
         </div>

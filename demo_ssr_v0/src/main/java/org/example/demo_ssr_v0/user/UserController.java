@@ -2,10 +2,20 @@ package org.example.demo_ssr_v0.user;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * 사용자 Controller (표현 계층)
@@ -21,6 +31,135 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class UserController {
 
     private final UserService userService;
+
+    @Value("${oauth.kakao.client-id}") // yml 파일에 있는거 가져오려면 @Value 사용
+    private String clientId;
+
+    @Value("${tenco.key}")
+    private String tencoKey;
+
+    // todo 테스트용 코드 - 삭제 예정
+//    @PostConstruct // 스프링실행시 자동실행되게 하려면 해당 어노테이션 필요
+//    public void init() {
+//        System.out.println("현재 적용된 카카오 클라이언트 키 확인: " + clientId);
+//        System.out.println("현재 적용된 나의 시크릿 키 확인: " + tencoKey);
+//    }
+
+    // 로그인 인터셉터에서 여기 못 들어오게 막고 있음! - 인터셉터에서 제외시키기
+    // [흐름] 1. 인가코드 받기 -> 2. 토큰(JWT) 발급 요청 -> 3. JWT로 사용자 정보 요청 -> 4. 우리 서버에 로그인/회원가입 처리
+    @GetMapping("/user/kakao")
+    public String kakaoCallback(@RequestParam(name = "code") String code, HttpSession session) {
+        // 1. 인가 코드 받아서 확인
+        System.out.println("1. 카카오 인가 코드 확인: " + code);
+
+        // 2. 토큰 발급 요청 (https://kauth.kakao.com/oauth/token - POST)
+        // 2-1. HTTP 헤더 커스텀
+        // -> Content-Type: application/x-www-form-urlencoded;charset=utf-8
+
+        // 2-2 server to server
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 2-3
+        // HTTP 메시지 헤더 구성
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        // 2-4 HTTP 메시지 바디 구성 (POST)
+        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+        tokenParams.add("grant_type", "authorization_code");
+        tokenParams.add("client_id", "a3473de44036ef36f7e90c6b70a38677"); // clientId 변수명 사용해도됨 위에서 설정했으니까 - "a3473de44036ef36f7e90c6b70a38677"
+        tokenParams.add("redirect_uri", "http://localhost:8080/user/kakao");
+        tokenParams.add("code", code);
+        // 시크릿 키 추가
+        tokenParams.add("client_secret", "nRoNjXP2WbOzztYklTGZq8cqvz96RpYx");
+
+        // 2-5 바디 + 헤더 구성(합치기)
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
+
+        // 2-6 요청하고 JWT 토큰 응답 받기 (카카오에서 액세스 토큰이라 부름)
+        ResponseEntity<UserResponse.OAuthToken> tokenResponse = restTemplate.exchange(
+                "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
+                tokenRequest,
+                UserResponse.OAuthToken.class); // 파싱 타입
+
+        // JWT 토큰 확인 (액세스 토큰)
+        System.out.println(tokenResponse.getHeaders());
+        System.out.println(tokenResponse.getBody().getAccessToken());
+        System.out.println(tokenResponse.getBody().getExpiresIn());
+
+        /// ///////////////////////////////////////////
+        // 3. 액세스 토큰을 받았기 때문에
+        // 카카오 자원서버(User 정보 등) 사용자에 대한 정보를 요청할 수 있다.
+        /// ///////////////////////////////////////////
+        // GET/POST https://kapi.kakao.com/v2/user/me
+        // 3-1 HTTP 클라이언트 선언
+        RestTemplate profileRT = new RestTemplate();
+
+        // 3-2 HTTP 메시지 헤더 커스텀
+        HttpHeaders profileHeaders = new HttpHeaders();
+        // Bearer + 공백 한칸 무조건 (안하면 오류 발생)
+        profileHeaders.add("Authorization",
+                "Bearer " + tokenResponse.getBody().getAccessToken());
+        profileHeaders.add("Content-Type",
+                "application/x-www-form-urlencoded;charset=utf-8");
+
+        // 3-3 요청 메시지(요청 엔티티) 생성 (요청 바디 없음, 안 만들어도 됨)
+        HttpEntity<Void> profileRequest = new HttpEntity<>(profileHeaders);
+
+        ResponseEntity<UserResponse.KakaoProfile> profileResponse = profileRT.exchange(
+                "https://kapi.kakao.com/v2/user/me", // url
+                HttpMethod.POST, // 메서드 방식
+                profileRequest, // 요청
+                UserResponse.KakaoProfile.class // 응답
+        );
+
+        // 3-4 사용자 정보 수신 완료
+        System.out.println(profileResponse.getBody().getId());
+        System.out.println(profileResponse.getBody().getProperties().getNickname());
+        System.out.println(profileResponse.getBody().getProperties().getThumbnailImage());
+
+        /// ////////////////////////////////////////////
+        // 4. 최초 사용자라면 강제 회원가입 처리 및 로그인 처리
+        /// ////////////////////////////////////////////
+        // DB에 회원가입 및 여부확인 -> User 엔티티 수정
+        // 소셜 로그인 닉네임과 기존 회원의 닉네임 중복 될 수있음
+        UserResponse.KakaoProfile kakaoProfile = profileResponse.getBody();
+
+        // username = 권지애_4657335610
+        String username = kakaoProfile.getProperties().getNickname() + "_" + kakaoProfile.getId();
+
+        // 권지애_4657335610 (새로 생성한 username이 DB에 있다면 -> 아.. 이전에 회원가입을 했군
+        // 사용자 이름 조회 쿼리 수행
+        // userOrigin의 return 타입은 User 이거나 null 임
+        User userOrigin = userService.사용자이름조회(username);
+        if (userOrigin == null) {
+            // 최초 카카오 소셜 로그인 사용자임
+            System.out.println("기존 회원이 아니므로 자동 회원가입 진행");
+
+            User newUser = User.builder()
+                    .username(username)
+                    .password(tencoKey) // 소셜 로그인은 임시 비밀번호로 설정함
+                    .email(username + "@kakao.com") // 선택사항 (카카오 이메일 받으려면 비즈니스 앱 신청해야함 - 임시 이메일)
+                    .provider(OAuthProvider.KAKAO)
+                    .build();
+
+            // 카카오 사용자 정보에 프로필 이미지가 있다면 설정
+            // http://k.kakaocdn.net/dn/UCUlX/dJMcagDPgBB/YPP8LAKUSZ4DCGNM7LWSNk/img_640x640.jpg
+            String profileImage = kakaoProfile.getProperties().getProfileImage();
+            if (profileImage != null && !profileImage.isEmpty()) {
+                newUser.setProfileImage(profileImage); // 카카오에서 넘겨받은 URL 그대로 저장
+            }
+
+            userService.소셜회원가입(newUser);
+            // 조심해야함! 반드시 필요함
+            userOrigin = newUser; // 반드시 넣어 줘야 함 왜? 로그인 처리해야하니까
+        } else {
+            System.out.println("이미 가입된 회원입니다, 바로 로그인이 진행됩니다.");
+        }
+        session.setAttribute("sessionUser", userOrigin);
+        return "redirect:/";
+    }
 
     // 프로필 이미지 삭제하기
     @PostMapping("/user/profile-image/delete")

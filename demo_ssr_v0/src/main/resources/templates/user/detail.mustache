@@ -7,14 +7,16 @@
             <div class="text-center mb-4">
                 {{#user.profileImage}}
                 {{! src 경로가 /images/!, 스프링에 등록한 리소스 핸들러가 동작함}}
-                <img src="/images/{{user.profileImage}}" alt="프로필 사진" class="rounded-circle border"
+                <img src="{{user.profilePath}}" alt="프로필 사진" class="rounded-circle border"
                      style="width: 200px; height: 200px; object-fit: cover">
                 <div class="mt-2">
                     <!-- TODO action 지정 예정 -->
+                    {{#user.local}}
                     <form action="/user/profile-image/delete" method="post" style="display: inline">
                         <button type="submit" class="btn btn-sm btn-danger"
                             onclick="return confirm('프로필 사진을 삭제하시겠습니까?')">프로필 삭제</button>
                     </form>
+                    {{/user.local}}
                 </div>
                 {{/user.profileImage}}
                 {{^user.profileImage}}
