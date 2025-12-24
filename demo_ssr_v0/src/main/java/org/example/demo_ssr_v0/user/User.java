@@ -88,6 +88,7 @@ public class User {
         updateDTO.validate();
 
         this.password = updateDTO.getPassword();
+        this.email = updateDTO.getEmail();
         this.profileImage = updateDTO.getProfileImageFilename();
 
         // 더티 체킹 (변경 감지)
@@ -145,5 +146,11 @@ public class User {
             return this.profileImage;
         }
         return "/images/" + this.profileImage;
+    }
+
+    // return 이 true, false를 반환하는 연산자는 ==
+    // 상수가 열거형이라서 이렇게 해야함
+    public boolean isLocal() {
+        return this.provider == OAuthProvider.LOCAL;
     }
 }

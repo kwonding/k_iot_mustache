@@ -8,9 +8,17 @@ import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
 import org.example.demo_ssr_v0._core.errors.exception.Exception500;
 import org.example.demo_ssr_v0._core.utils.FileUtil;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 
@@ -38,6 +46,111 @@ public class UserService {
     // DIP - 추상화가 높은 녀석을 선언하는 것이 좋다.
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${oauth.kakao.client-id}")
+    private String clientId;
+    @Value("${tenco.key}")
+    private String tencoKey;
+
+
+    public User 카카오소셜로그인(String code) {
+        // 1. 인가 코드로 액세스 토큰 발급
+        UserResponse.OAuthToken oAuthToken = 카카오액세스토큰발급(code);
+
+        // 2. 액세스 토큰으로 프로필 정보 조회
+        UserResponse.KakaoProfile kakaoProfile = 카카오프로필조회(oAuthToken.getAccessToken());
+
+        // 3. 프로필 정보로 사용자 생성 또는 조회
+        User user = 카카오사용자생성또는조회(kakaoProfile);
+
+        // 4. 컨트롤러 단으로 유저(Entity) 반환 - 로그인 처리
+        return user;
+    }
+
+    // private으로 캡슐화처리 - Controller 단에서 사용할 수 없게
+    /**
+     * 카카오 인가 코드로 엑세스 토큰 발급
+     * @param code 카카오 인가 코드
+     * @return Oauth 액세스 토큰 정보
+     */
+    private UserResponse.OAuthToken 카카오액세스토큰발급(String code) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+        tokenParams.add("grant_type", "authorization_code");
+        tokenParams.add("client_id", "a3473de44036ef36f7e90c6b70a38677"); // clientId 변수명 사용해도됨 위에서 설정했으니까 - "a3473de44036ef36f7e90c6b70a38677"
+        tokenParams.add("redirect_uri", "http://localhost:8080/user/kakao");
+        tokenParams.add("code", code);
+        // Todo - env 파일에 옮겨야 함 시크릿 키 추가(노출 금지)
+        tokenParams.add("client_secret", "nRoNjXP2WbOzztYklTGZq8cqvz96RpYx");
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
+        ResponseEntity<UserResponse.OAuthToken> tokenResponse = restTemplate.exchange(
+                "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
+                tokenRequest,
+                UserResponse.OAuthToken.class); // 파싱 타입
+
+        UserResponse.OAuthToken oAuthToken = tokenResponse.getBody();
+
+        return oAuthToken;
+    }
+
+    /**
+     * 카카오 액세스 토큰으로 프로필 정보 조회
+     * @param accessToken 카카오 액세스 토큰
+     * @return KakaoProfile 카카오 프로필 정보
+     */
+    private UserResponse.KakaoProfile 카카오프로필조회(String accessToken) {
+        RestTemplate profileRT = new RestTemplate();
+
+        HttpHeaders profileHeaders = new HttpHeaders();
+        // Bearer + 공백 한칸 무조건 (안하면 오류 발생)
+        profileHeaders.add("Authorization",
+                "Bearer " + accessToken);
+        profileHeaders.add("Content-Type",
+                "application/x-www-form-urlencoded;charset=utf-8");
+
+        HttpEntity<Void> profileRequest = new HttpEntity<>(profileHeaders);
+
+        ResponseEntity<UserResponse.KakaoProfile> profileResponse = profileRT.exchange(
+                "https://kapi.kakao.com/v2/user/me",
+                HttpMethod.POST,
+                profileRequest,
+                UserResponse.KakaoProfile.class
+        );
+
+        UserResponse.KakaoProfile kakaoProfile = profileResponse.getBody();
+        return kakaoProfile;
+    }
+
+    private User 카카오사용자생성또는조회(UserResponse.KakaoProfile kakaoProfile) {
+
+        String username = kakaoProfile.getProperties().getNickname() + "_" + kakaoProfile.getId();
+
+        User userOrigin = 사용자이름조회(username);
+        if (userOrigin == null) {
+            User newUser = User.builder()
+                    .username(username)
+                    .password(passwordEncoder.encode(tencoKey)) // 소셜 로그인은 임시 비밀번호로 설정함
+                    .email(username + "@kakao.com") // 선택사항 (카카오 이메일 받으려면 비즈니스 앱 신청해야함 - 임시 이메일)
+                    .provider(OAuthProvider.KAKAO)
+                    .build();
+
+            String profileImage = kakaoProfile.getProperties().getProfileImage();
+            if (profileImage != null && !profileImage.isEmpty()) {
+                newUser.setProfileImage(profileImage); // 카카오에서 넘겨받은 URL 그대로 저장
+            }
+
+            소셜회원가입(newUser);
+            userOrigin = newUser; // 필수
+        }
+
+        return userOrigin;
+    }
 
     @Transactional
     public User 회원가입(UserRequest.JoinDTO joinDTO) {
