@@ -8,6 +8,7 @@ import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
 import org.example.demo_ssr_v0._core.errors.exception.Exception500;
 import org.example.demo_ssr_v0._core.utils.FileUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +37,11 @@ public class UserService {
     // 객체 지향 개념 --> SOLID 원칙
     // DIP - 추상화가 높은 녀석을 선언하는 것이 좋다.
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public User 회원가입(UserRequest.JoinDTO joinDTO) {
 
-        joinDTO.validate();
         // 1. 사용자명 중복 체크
         if (userRepository.findByUsername(joinDTO.getUsername()).isPresent()) {
             // isPresent -> 있으면 true 반환, 없으면 false 반환
@@ -50,7 +51,8 @@ public class UserService {
         String profileImageFilename = null;
 
         // 2. 회원 가입시 파일이 넘어 왔는지 확인
-        if (joinDTO.getProfileImage() != null) {
+        // MultipartFile (기본적으로 null이 넘어올 수도 "" 공백으로 들어올수도있음)
+        if (joinDTO.getProfileImage() != null && !joinDTO.getProfileImage().isEmpty()) {
 
             // 2-1 유효성 검사(이미지 파일인지 아닌지)
             try {
@@ -63,22 +65,32 @@ public class UserService {
                 throw new RuntimeException(e);
             }
         }
-
+        // 해싱 --> 해시값으로 만들어줌
+        // 비밀번호를 평문에서 해시값으로 변경 해주어야 함
+        String hashPwd = passwordEncoder.encode(joinDTO.getPassword());
         User user = joinDTO.toEntity(profileImageFilename);
+        user.setPassword(hashPwd);
+
         return userRepository.save(user);
     }
 
     public User 로그인(UserRequest.LoginDTO loginDTO) {
 
         // 사용자가 던진 값과 DB에 사용자 이름과 비밀번호를 확인해 주어야 한다.
-        User userEntity = userRepository.findByUsernameAndPasswordWithRoles(
-                loginDTO.getUsername(), loginDTO.getPassword())
+        User userEntity = userRepository.findByUsernameWithRoles(loginDTO.getUsername())
                 .orElse(null); // 로그인 실패시 null 반환
 
         if(userEntity == null) {
-            throw new Exception400("사용자명 또는 비밀번호가 올바르지 않습니다.");
+            throw new Exception400("사용자가 존재하지 않습니다");
         }
 
+        // 비밀번호 검증 (BCrypt matches 메서드 사용해서 비교)
+        // 일치하면 true, 불일치 false 반환
+        if (passwordEncoder.matches(loginDTO.getPassword(), userEntity.getPassword()) == false) {
+            throw new Exception400("사용자명 또는 비밀번호가 올바르지 않습니다");
+        }
+
+        // 기존 샘플 데이터로 회원가입된 사용자들로는 로그인을 못함!
         return userEntity; // Controller 단으로 그대로 넘김
     }
 
@@ -138,6 +150,8 @@ public class UserService {
             // 새 이미지가 업로드 되지 않았으면 기존 이미지 파일 이름 유지
             updateDTO.setProfileImageFilename(oldProfileImage);
         }
+        String hashPwd = passwordEncoder.encode(updateDTO.getPassword());
+        updateDTO.setPassword(hashPwd);
 
         // 객체 상태값 변경 (트랜잭션이 끝나면 자동으로 commit 및 변경해줄거야)
         userEntity.update(updateDTO);

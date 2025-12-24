@@ -5,7 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.interceptor.AdminInterceptor;
 import org.example.demo_ssr_v0._core.interceptor.LoginInterceptor;
 import org.example.demo_ssr_v0._core.interceptor.SessionInterceptor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -80,5 +83,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 파일 시스템에서 절대 경로를 의미하는 URI 표기법은 -> ///:
         // file:images/ 앞에 슬러시가 없기 때문에 상대경로를 의미함
         // file:///D:upload/ <-- 내 컴퓨터 절대 경로를 의미함
+    }
+
+    // 다형성: PasswordEncoder - 인터페이스, BCryptPasswordEncoder  - 구현 클래스 (갈아끼우기가능)
+    @Bean // IoC 처리 (즉, 스프링 컨테이너에 싱글톤 패턴으로 객체가 메모리에 올라감)
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

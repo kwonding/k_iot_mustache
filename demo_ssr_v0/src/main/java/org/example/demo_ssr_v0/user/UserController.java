@@ -7,6 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,6 +32,7 @@ import org.springframework.web.client.RestTemplate;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${oauth.kakao.client-id}") // yml 파일에 있는거 가져오려면 @Value 사용
     private String clientId;
@@ -139,7 +141,7 @@ public class UserController {
 
             User newUser = User.builder()
                     .username(username)
-                    .password(tencoKey) // 소셜 로그인은 임시 비밀번호로 설정함
+                    .password(passwordEncoder.encode(tencoKey)) // 소셜 로그인은 임시 비밀번호로 설정함
                     .email(username + "@kakao.com") // 선택사항 (카카오 이메일 받으려면 비즈니스 앱 신청해야함 - 임시 이메일)
                     .provider(OAuthProvider.KAKAO)
                     .build();
