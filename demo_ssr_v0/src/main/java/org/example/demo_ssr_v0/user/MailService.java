@@ -40,12 +40,29 @@ public class MailService {
 
             javaMailSender.send(message);
 
-            // 세션에 임시 코드 저장
+            // 4. 세션에 임시 코드 저장
+            // sessionUser: User(...)
+            // code_a@naver.com(key): 123456(value)
+            // 동시에 접속자가 많아도 이메일 주소로 누구의 인증번호인지 구별할 수 있음
+            session.setAttribute("code_" + email, code);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+    }
 
+    public boolean 인증번호확인(String email, String code) {
+        // 1. 세션에서 저장된 코드 가져오기
+        // key: code_ + "a@naver.com"
+        String savedCode = (String) session.getAttribute("code_" + email);
+
+        // 2. 세션에서 가지고 온 code 값과 사용자가 입력한 인증번호 일치 여부 확인
+        if (savedCode != null && savedCode.equals(code)) {
+            // 세션 메모리에서 제거 해주어야 함
+            session.removeAttribute("code_" + email);
+            return true;
+        }
+            return false;
     }
 }

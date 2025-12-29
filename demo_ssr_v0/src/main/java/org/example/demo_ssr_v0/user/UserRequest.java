@@ -83,7 +83,7 @@ public class UserRequest {
     @Data
     public static class EmailCheckDTO {
         private String email;
-        // 추후 이메일 인증번호도 추가할 예정
+        private String code;
 
         public void validate() {
             if (email == null || email.isEmpty()) {

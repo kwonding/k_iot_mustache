@@ -31,8 +31,8 @@
                 <div class="mb-3" id="code-box" style="display: none">
                     <label for="">인증번호</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="인증번호 6자리" maxlength="6">
-                        <button type="button" class="btn btn-outline-secondary" onclick="alert('인증번호전송')">확인</button>
+                        <input id="code" type="text" class="form-control" placeholder="인증번호 6자리" maxlength="6">
+                        <button type="button" class="btn btn-outline-secondary" onclick="callVerifyApi()">확인</button>
                     </div>
                     <!-- 인증 결과 메세지 표시 영역 -->
                     <div id="msg" class="form-text"></div>
@@ -86,8 +86,50 @@
             // 네트워크 오류 처리 즉, 상태코드 자체를 못받을 때
             alert("서버 통신 오류" + e.message);
         }
-
     }
+
+    // 인증번호 확인 API 호출 (AJAX)
+    async function callVerifyApi() {
+        // 이메일 인증번호  확인시에는 반드시 이메일과 인증번호 동시 비교
+        let email = document.querySelector("#email").value;
+        let code = document.querySelector("#code").value;
+
+        if (!code) {
+            alert("인증번호를 입력해주세요");
+            return;
+        }
+
+        try {
+            // fetch API POST 요청
+            let response = await fetch("/api/email/verify", { // 자바스크립트 객체만드는 표현식
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({email: email, code: code}) // 서버에 전달할 때는 json 형식으로 변경해줌
+            });
+
+            let result = await response.json();
+            // <div id="msg" class="form-text"></div>
+            let msgBox = document.querySelector("#msg");
+
+            if (response.ok) {
+                // 인증 성공, innerHTML은 위의 msgBox div 안에 Html 태그 들어가겠다는 말임
+                msgBox.innerHTML = "<span style='color: green'>인증 되었습니다.</span>"
+                // dom 접근해서 false --> true 변경 처리
+                document.querySelector("#isEmailVerified").value = true;
+                // 이메일 수정 불가 처리
+                document.querySelector("#email").readOnly = true;
+            } else {
+                msgBox.innerHTML = "<span style='color: darkred'>인증번호가 일치하지 않습니다.</span>"
+                document.querySelector("#isEmailVerified").value = false;
+            }
+        } catch (e) {
+            console.log(e);
+            alert("네트워크 오류 발생");
+        }
+    }
+
 </script>
 
 {{> layout/footer}}

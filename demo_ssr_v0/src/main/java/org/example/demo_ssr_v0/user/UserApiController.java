@@ -25,4 +25,27 @@ public class UserApiController {
 
         return ResponseEntity.ok().body(Map.of("message", "인증번호가 발송되었습니다."));
     }
+
+    @PostMapping("/api/email/verify")
+    public ResponseEntity<?> 인증번호확인(@RequestBody UserRequest.EmailCheckDTO reqDTO) {
+        reqDTO.validate();
+
+        if (reqDTO.getCode() == null || reqDTO.getCode().trim().isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "인증번호를 입력해주세요"));
+        }
+
+        // 메일 서비스단에서 인증번호 확인
+        boolean isVerified = mailService.인증번호확인(reqDTO.getEmail(), reqDTO.getCode());
+
+        if (isVerified) {
+            return ResponseEntity.ok().body(Map.of("message", "인증 완료되었습니다"));
+        } else {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "인증번호가 일치하지않습니다"));
+        }
+
+    }
 }
