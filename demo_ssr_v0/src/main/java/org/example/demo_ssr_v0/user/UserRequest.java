@@ -1,6 +1,7 @@
 package org.example.demo_ssr_v0.user;
 
 import lombok.Data;
+import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.springframework.web.multipart.MultipartFile;
 
 public class UserRequest {
@@ -77,6 +78,22 @@ public class UserRequest {
             }
         }
 
+    }
+
+    @Data
+    public static class EmailCheckDTO {
+        private String email;
+        // 추후 이메일 인증번호도 추가할 예정
+
+        public void validate() {
+            if (email == null || email.isEmpty()) {
+                // Exception400 추후 수정
+                throw new Exception400("이메일을 입력해주세요");
+            }
+            if (!email.contains("@")) {
+                throw new Exception400("올바른 이메일 형식이 아닙니다.");
+            }
+        }
     }
 
 }

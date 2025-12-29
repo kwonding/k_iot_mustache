@@ -1,0 +1,51 @@
+package org.example.demo_ssr_v0.user;
+
+import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.example.demo_ssr_v0._core.utils.MailUtils;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+@RequiredArgsConstructor
+@Service
+public class MailService {
+
+    // 의존성 주입 받았던 클래스 (JavaMailSender - 편지를 쓰게하는 클래스)
+    private final JavaMailSender javaMailSender;
+    private final HttpSession session;
+
+    public void 인증번호발송(String email) {
+        // 1. 인증번호 생성
+        // email -> 인증번호(123456) -> 임시로 세션메모리에 저장 -> 메일 발송 요청
+        String code = MailUtils.generateRandomCode();
+
+        // 2. 이메일 전송 내용 설정
+        // MimeMessage / SimpleMailMessage(순수하게 텍스트만 보낼 때 사용)
+        // MimeMessage - 텍스트 뿐만 아니라 HTML, 첨부파일 포함할 수 있는 표준 포맷
+        MimeMessage message = javaMailSender.createMimeMessage();
+
+        // 3. 구글 메일 서버로 전송 - 우리 서버가 아니고 외부서버로 통신 요청해야함
+        // 외부 통신하는 코드 일때도 기본적으로 try-catch를 사용해줘야 함
+        try {
+            // 3-1 도우미 객체를 사용
+            // 두번째 인자: Multipart 허용
+            // 세번째 인자: encoding 설정, 한글안깨지게하기위함
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(email); // 받는 사람 이메일 주소
+            helper.setSubject("[MyBlog] 회원가입 이메일 전송"); // 제목 설정
+            helper.setText("<h3>인증번호는 [" + code + "] 입니다 </h3>", true); // 본문
+
+            javaMailSender.send(message);
+
+            // 세션에 임시 코드 저장
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+}

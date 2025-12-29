@@ -49,6 +49,8 @@ public class UserService {
 
     @Value("${oauth.kakao.client-id}")
     private String clientId;
+    @Value("${oauth.kakao.client-secret}")
+    private String clientSecret;
     @Value("${tenco.key}")
     private String tencoKey;
 
@@ -81,11 +83,11 @@ public class UserService {
 
         MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
         tokenParams.add("grant_type", "authorization_code");
-        tokenParams.add("client_id", "a3473de44036ef36f7e90c6b70a38677"); // clientId 변수명 사용해도됨 위에서 설정했으니까 - "a3473de44036ef36f7e90c6b70a38677"
+        tokenParams.add("client_id", clientId); // clientId 변수명 사용해도됨 위에서 설정했으니까 - "a3473de44036ef36f7e90c6b70a38677"
         tokenParams.add("redirect_uri", "http://localhost:8080/user/kakao");
         tokenParams.add("code", code);
         // Todo - env 파일에 옮겨야 함 시크릿 키 추가(노출 금지)
-        tokenParams.add("client_secret", "nRoNjXP2WbOzztYklTGZq8cqvz96RpYx");
+        tokenParams.add("client_secret", clientSecret);
 
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
         ResponseEntity<UserResponse.OAuthToken> tokenResponse = restTemplate.exchange(
