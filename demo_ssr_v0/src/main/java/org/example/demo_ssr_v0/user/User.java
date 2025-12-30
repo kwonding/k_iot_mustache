@@ -24,6 +24,8 @@ public class User {
     @Column(unique = true)
     private String username;
     private String password;
+
+    @Column(unique = true) // 이메일 유니크 설정
     private String email;
 
     @CreationTimestamp

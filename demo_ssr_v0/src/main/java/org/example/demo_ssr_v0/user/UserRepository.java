@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import javax.swing.text.html.Option;
 import java.util.Optional;
 
 // JpaRepository -> @Repository 있음 -> IoC 됨
@@ -14,8 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // - Username: 엔티티의 username 필드명 일치
     // - Optional: 결과가 없을 수 있으므로 Optional 반환 NullSafety
     Optional<User> findByUsername(String username);
-    // SELECT * FROM user_tb WHERE username = ? AND password = ?
-//    Optional<User> findByUsernameAndPassword(String username, String password);
+    Optional<User> findByEmail(String email); // 이메일 존재 여부 확인 쿼리 네임드 메서드 설계
 
     /**
      * 로그인 시 역할(ROLE) 정보까지 함께 조회되는 메서드

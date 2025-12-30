@@ -163,6 +163,11 @@ public class UserService {
             throw new Exception400("이미 존재하는 사용자 이름입니다");
         }
 
+        // 1-1 이메일 중복 체크
+        if (userRepository.findByEmail(joinDTO.getEmail()).isPresent()) {
+            throw new Exception400("이미 등록된 이메일입니다");
+        }
+
         String profileImageFilename = null;
 
         // 2. 회원 가입시 파일이 넘어 왔는지 확인
