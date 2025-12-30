@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -27,6 +28,10 @@ public class User {
 
     @Column(unique = true) // 이메일 유니크 설정
     private String email;
+
+    @Column(nullable = false)
+    @ColumnDefault("0") // 기본값 세팅
+    private Integer point = 0;
 
     @CreationTimestamp
     private Timestamp createdAt;
@@ -65,7 +70,8 @@ public class User {
                 String email,
                 Timestamp createdAt,
                 String profileImage,
-                OAuthProvider provider
+                OAuthProvider provider,
+                Integer point
     ) {
         this.id = id;
         this.username = username;
@@ -81,6 +87,8 @@ public class User {
         } else {
             this.provider = provider; // 들어온 값이 있다면 그대로 저장
         }
+        // DB 테스트 시(INSERT) 오류 날 수 있어서 방어적 코드 작성
+        this.point = (point != null) ? point : 0;
     }
 
     // 회원정보 수정 비즈니스 로직 추가
@@ -154,5 +162,32 @@ public class User {
     // 상수가 열거형이라서 이렇게 해야함
     public boolean isLocal() {
         return this.provider == OAuthProvider.LOCAL;
+    }
+
+    /**
+     * 포인트 차감
+     * @param amount (차감할 포인트 값)
+     * @throws Exception400 포인트가 부족할 경우 에러
+     */
+    // 포인트 -> 포인트 추가, 차감 처리 - 방어적 코드가 중요!
+    public void deductPoint(Integer amount) {
+        if (amount == null || amount <= 0) {
+            throw new Exception400("차감할 포인트는 0보다 작을 수 없습니다");
+        }
+
+        if (this.point < amount) {
+            throw new Exception400("포인트가 부족합니다. 현재 포인트: " + this.point);
+        }
+
+        this.point = this.point - amount;
+//        this.point -= amount;
+    }
+
+    public void chargePoint(Integer amount) {
+        if (amount == null || amount <= 0) {
+            throw new Exception400("충전할 포인트는 0보다 작을 수 없습니다");
+        }
+
+        this.point += amount;
     }
 }

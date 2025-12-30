@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.demo_ssr_v0.user.User;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
@@ -21,6 +22,9 @@ public class Board {
     private String title;
     private String content;
 
+    @ColumnDefault("false")
+    private Boolean premium = false;
+
     // N : 1
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -31,10 +35,12 @@ public class Board {
     private Timestamp createdAt;
 
     @Builder
-    public Board(String title, String content, User user) {
+    public Board(String title, String content, User user, Boolean premium) {
         this.title = title;
         this.content = content;
         this.user = user;
+        // 체크박스에 체크를 안하면 null로 들어오는 것을 방지, 체크하면 true
+        this.premium = (premium != null) ? premium : false;
     }
 
     // Board 상태값 수정하는 로직
@@ -44,8 +50,9 @@ public class Board {
 
         this.title = updateDto.getTitle();
         this.content = updateDto.getContent();
-        // 게시글 수정은 작성자를 변경할 수 없다.
-        // this.user = updateDto.getUsername();
+        // 게시글 수정은 작성자를 변경할 수 없다. - this.user = updateDto.getUsername();
+        // 체크 박스 null 방지
+        this.premium = (updateDto.getPremium() != null) ? updateDto.getPremium() : false;
     }
 
     // 게시글 소유자 확인 로직

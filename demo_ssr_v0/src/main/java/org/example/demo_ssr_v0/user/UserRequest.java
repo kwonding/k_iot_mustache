@@ -96,4 +96,15 @@ public class UserRequest {
         }
     }
 
+    @Data
+    public static class PointChargeDTO {
+        private Integer amount;
+
+        public void validate() {
+            if (amount == null || amount <= 0) {
+                throw new Exception400("충전할 포인트는 0보다 작을 수 없습니다.");
+            }
+        }
+    }
+
 }

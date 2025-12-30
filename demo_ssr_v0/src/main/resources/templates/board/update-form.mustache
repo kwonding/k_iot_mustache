@@ -16,7 +16,12 @@
                 <div class="mb-3">
                     <textarea class="form-control" rows="5" name="content">{{board.content}}</textarea>
                 </div>
-
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="premium" id="premium">
+                        <label class="form-check-label" for="premium">유료 게시글로 설정 (500P)</label>
+                    </div>
+                </div>
                 <!-- 수정 완료 버튼: 클릭시 폼 데이터가 POST로 전송됨 -->
                 <button class="btn btn-primary form-control">글수정하기완료</button>
             </form>

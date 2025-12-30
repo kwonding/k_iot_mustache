@@ -42,6 +42,12 @@
                 <label for="" class="form-label fw-bold">가입일</label>
                 <p class="form-control-plaintext">{{user.createdAt}}</p>
             </div>
+            <div class="mb-3">
+                <label for="" class="form-label fw-bold">보유 포인트</label>
+                <p class="form-control-plaintext">
+                    <span class="badge bg-primary fs-6">{{user.point}}</span>
+                </p>
+            </div>
             <div class="d-grid gap-2 mb-3">
                 {{#user.isLocal}}
                 <a href="/user/update" class="btn btn-primary">회원정보수정화면</a>

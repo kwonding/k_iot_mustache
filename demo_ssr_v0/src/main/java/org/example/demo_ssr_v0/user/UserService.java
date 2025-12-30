@@ -55,6 +55,7 @@ public class UserService {
     private String tencoKey;
 
 
+    @Transactional
     public User 카카오소셜로그인(String code) {
         // 1. 인가 코드로 액세스 토큰 발급
         UserResponse.OAuthToken oAuthToken = 카카오액세스토큰발급(code);
@@ -129,7 +130,8 @@ public class UserService {
         return kakaoProfile;
     }
 
-    private User 카카오사용자생성또는조회(UserResponse.KakaoProfile kakaoProfile) {
+    @Transactional
+    public User 카카오사용자생성또는조회(UserResponse.KakaoProfile kakaoProfile) {
 
         String username = kakaoProfile.getProperties().getNickname() + "_" + kakaoProfile.getId();
 
@@ -326,5 +328,18 @@ public class UserService {
 
     public void 소셜회원가입(User user) {
         userRepository.save(user);
+    }
+
+    @Transactional
+    public User 포인트충전(Long userId, Integer amount) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new Exception404("사용자를 찾을 수 없습니다"));
+
+        // 2. 포인트 충전
+        user.chargePoint(amount);
+
+        // 3. 변경된 엔티티 반환
+        return userRepository.save(user);
     }
 }

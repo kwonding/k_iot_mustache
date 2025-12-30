@@ -47,8 +47,11 @@ public class BoardResponse {
         private Long userId;
         private String username;
         private String createdAt;
+        private Boolean premium;
+        private Boolean isPurchased;
+        // 로그인한 사용자가 이 게시글을 구매 했는지 확인 (단, 작성자 제외)
 
-        public DetailDTO(Board board) {
+        public DetailDTO(Board board, boolean isPurchased) {
             this.id = board.getId();
             this.title = board.getTitle();
             this.content = board.getContent();
@@ -60,6 +63,9 @@ public class BoardResponse {
             if (board.getCreatedAt() != null) {
                 this.createdAt = MyDateUtil.timestampFormat(board.getCreatedAt());
             }
+            this.premium = board.getPremium();
+            // 구매 여부 추가
+            this.isPurchased = isPurchased;
         }
     } // end of static inner class
 

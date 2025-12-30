@@ -3,6 +3,7 @@ package org.example.demo_ssr_v0.board;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.*;
+import org.example.demo_ssr_v0.purchase.PurchaseService;
 import org.example.demo_ssr_v0.reply.ReplyResponse;
 import org.example.demo_ssr_v0.reply.ReplyService;
 import org.example.demo_ssr_v0.user.User;
@@ -20,6 +21,7 @@ public class BoardController {
 //    @Autowired // 의존성 주입 방법 1
     private final BoardService boardService;
     private final ReplyService replyService; // 추가
+    private final PurchaseService purchaseService;
 
     // 생성자 의존 주입 방법 2
 //    public BoardController(BoardPersistRepository boardPersistRepository) {
@@ -159,11 +161,12 @@ public class BoardController {
     // http://localhost:8080/board/1
     @GetMapping("/board/{id}")
     public String detail(@PathVariable(name = "id") Long boardId, Model model, HttpSession session) {
-
-        BoardResponse.DetailDTO board = boardService.게시글상세조회(boardId);
-
         // 세션에 로그인 사용자 정보 조회(없을 수도 있음)
         User sessionUser = (User) session.getAttribute("sessionUser");
+        Long sessionUserId = sessionUser != null ? sessionUser.getId() : null;
+
+        BoardResponse.DetailDTO board = boardService.게시글상세조회(boardId, sessionUserId);
+
         boolean isOwner = false;
         // 응답 DTO에 담겨있는 정보와 SessionUser 담겨 있는 정보를 확인하여 처리 가능
         if (sessionUser != null && board.getUserId() != null) {
@@ -172,7 +175,7 @@ public class BoardController {
 
         // 댓글 목록 조회 (추가)
         // 로그인 안 한 상태에서 댓글 목록 요청시에 sessionUserId는 null 값임 - 방어적 코드 필요
-        Long sessionUserId = sessionUser != null ? sessionUser.getId() : null;
+        // Long sessionUserId = sessionUser != null ? sessionUser.getId() : null;
         List<ReplyResponse.ListDTO> replyList = replyService.댓글목록조회(boardId, sessionUserId);
 
         model.addAttribute("isOwner", isOwner);
@@ -200,6 +203,18 @@ public class BoardController {
         boardService.게시글삭제(id, sessionUser.getId());
 
         return "redirect:/";
+    }
+
+    @PostMapping("/board/{id}/purchase")
+    public String purchase(@PathVariable(name = "id") Long boardId, HttpSession session) {
+        // 1. 인증검사 - 로그인 인터셉터가 동작함
+        User sessionUser = (User) session.getAttribute("sessionUser");
+
+        // 포인트 차감
+        // 구매 내역 저장 (INSERT) 됨
+        purchaseService.구매하기(sessionUser.getId(), boardId);
+
+        return "redirect:/board/" + boardId;
     }
 
 }

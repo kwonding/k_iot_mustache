@@ -13,9 +13,15 @@ public class BoardRequest {
         private String title;
         private String content;
         private String username;
+        private Boolean premium; // null, true
 
         public Board toEntity(User user) {
-            return new Board(title, content, user);
+            return Board.builder()
+                    .title(title)
+                    .content(content)
+                    .user(user)
+                    .premium(premium != null ? premium : false)
+                    .build();
         }
     }
 
@@ -24,6 +30,7 @@ public class BoardRequest {
     public static class UpdateDto {
         private String title;
         private String content;
+        private Boolean premium; // null, true
 
         // 검증 메서드
         public void validate() {

@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.Exception400;
 import org.example.demo_ssr_v0._core.errors.exception.Exception403;
 import org.example.demo_ssr_v0._core.errors.exception.Exception404;
+import org.example.demo_ssr_v0.purchase.PurchaseRepository;
+import org.example.demo_ssr_v0.purchase.PurchaseService;
 import org.example.demo_ssr_v0.reply.ReplyRepository;
 import org.example.demo_ssr_v0.user.User;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,8 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
     private final ReplyRepository replyRepository;
+    private final PurchaseRepository purchaseRepository; // 재활용
+    private final PurchaseService purchaseService;
 
     /**
      * 페이징 처리
@@ -90,12 +94,21 @@ public class BoardService {
 //        return dtoList;
 //    }
 
-    public BoardResponse.DetailDTO 게시글상세조회(Long boardId) {
+    public BoardResponse.DetailDTO 게시글상세조회(Long boardId, Long userId) {
 
         Board board = boardRepository.findByIdWithUser(boardId)
                 .orElseThrow(() -> new Exception400("해당 게시글을 찾을 수 없습니다."));
 
-        return new BoardResponse.DetailDTO(board);
+        // board -> 유료 글 / 무료 글 (저장 되어 있음)
+
+        // 구매 여부 확인 (로그인한 사용자가 있는 경우만 확인 가능)
+        boolean isPurchased = false;
+        if (userId != null) {
+            // 구매했다면 true 값을 반환 아니면 false 반환
+            isPurchased = purchaseService.구매여부확인(userId, boardId);
+        }
+
+        return new BoardResponse.DetailDTO(board, isPurchased);
     }
 
     // 1. 트랜잭션 처리
