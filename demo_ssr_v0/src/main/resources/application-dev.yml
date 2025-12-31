@@ -99,3 +99,8 @@ oauth:
 
 tenco:
   key: ${TENCO_KEY}
+
+
+portone:
+  imp-key: ${IMP_REST_API_KEY}
+  imp-secret: ${IMP_SECRET_KEY}

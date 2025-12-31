@@ -24,6 +24,13 @@ public class UserController {
 
     private final UserService userService;
 
+    @GetMapping("/user/point/charge")
+    public String chargePointForm(Model model, HttpSession session) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        model.addAttribute("user", sessionUser);
+        return "user/charge-point";
+    }
+
     @GetMapping("/user/kakao")
     public String kakaoCallback(@RequestParam(name = "code") String code, HttpSession session) {
         try {

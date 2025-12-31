@@ -13,6 +13,7 @@ public class BoardRequest {
         private String title;
         private String content;
         private String username;
+        // 체크박스 체크 유무
         private Boolean premium; // null, true
 
         public Board toEntity(User user) {

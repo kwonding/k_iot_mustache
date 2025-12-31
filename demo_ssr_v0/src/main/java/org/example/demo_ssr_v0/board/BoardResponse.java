@@ -48,7 +48,7 @@ public class BoardResponse {
         private String username;
         private String createdAt;
         private Boolean premium;
-        private Boolean isPurchased;
+        private boolean isPurchased;
         // 로그인한 사용자가 이 게시글을 구매 했는지 확인 (단, 작성자 제외)
 
         public DetailDTO(Board board, boolean isPurchased) {
