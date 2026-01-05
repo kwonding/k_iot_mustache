@@ -111,10 +111,12 @@
                                    buyer_name: '{{user.username}}',
                                },
                                function (response) {
-                                   // 결제 종료 시 호출되는 콜백 함수
+                                   // 포트원 결제 종료 시 호출되는 콜백 함수
                                    // response.imp_uid 값으로 결제 단건조회 API를 호출하여 결제 결과를 확인하고,
                                    if (response.success) {
-                                       alert("포트원에서만 결제 성공 단 우리 서버에서 검증해야 함");
+                                       // 확인하는 과정이 필요함
+                                       console.log(response);
+                                       verifyPayment(response.imp_uid, response.merchant_uid)
                                    } else {
                                        alert("결제 실패하였습니다\n에러내용" + response.error_msg);
                                    }
@@ -126,6 +128,39 @@
                        alert(err.message);
                    })
         });
+        // 5. 서버 검증 함수 (최종 승인)
+        // 필요한 것 두가지
+        // 1. 포트원 결제 고유 번호
+        // 2. 우리 서버에서 만들었던 고유 주문 번호
+        // 우리 서버에 실제 검증 요청 및 포인트 충전 요청
+        function verifyPayment(imp_uid, merchant_uid) {
+            fetch('/api/payment/verify', { // 객체로 전달
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ // 자바스크립트 객체가 문자열 형식으로 바뀜
+                    impUid: imp_uid,
+                    merchantUid: merchant_uid
+                })
+            }).then(res => { // res는 컨트롤러 ResponseEntity임
+                if (!res.ok) { // 즉, 통신실패
+                    return res.json().then((e) => {
+                        // 아래 catch 로 잡힘!
+                       throw new Error(e.message);
+                    });
+                }
+                // 성공
+                // 상자를 뜯어서 내용물을(JSON 문자열을) 꺼내서 js Object로 변환
+                return res.json();
+            })
+            .then(data => {
+                // 모든 검증 통과 (서버단에서 포인트 충전 완료)
+                alert(`충전이 완료되었습니다\n충전된 금액:${data.amount}\n현재 포인트: ${data.currentPoint}`);
+                location.href = '/user/detail';
+            })
+            .catch(err => {
+               alert('결제 검증에 실패했습니다\n관리자에게 문의하세요');
+            });
+        }
 
     }); // end of DOMContentLoaded
 </script>
