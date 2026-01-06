@@ -3,11 +3,15 @@ package org.example.demo_ssr_v0.user;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v0._core.errors.exception.Exception401;
+import org.example.demo_ssr_v0.purchase.PurchaseResponse;
+import org.example.demo_ssr_v0.purchase.PurchaseService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 /**
  * 사용자 Controller (표현 계층)
@@ -23,6 +27,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class UserController {
 
     private final UserService userService;
+    private final PurchaseService purchaseService;
+
+    @GetMapping("/user/purchase/list")
+    public String purchaseList(Model model, HttpSession session) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        List<PurchaseResponse.ListDTO> purchaseList = purchaseService.구매내역조회(sessionUser.getId());
+
+        model.addAttribute("purchaseList", purchaseList);
+
+        return "user/purchase-list";
+    }
 
     @GetMapping("/user/point/charge")
     public String chargePointForm(Model model, HttpSession session) {

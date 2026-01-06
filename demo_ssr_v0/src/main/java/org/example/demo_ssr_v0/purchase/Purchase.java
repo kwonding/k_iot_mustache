@@ -45,7 +45,7 @@ public class Purchase {
     private Integer price;
 
     @CreationTimestamp
-    private Timestamp timestamp;
+    private Timestamp createdAt;
 
     @Builder
     public Purchase(User user, Board board, Integer price) {

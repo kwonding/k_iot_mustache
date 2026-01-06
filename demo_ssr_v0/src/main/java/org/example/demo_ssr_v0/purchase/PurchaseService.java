@@ -10,6 +10,8 @@ import org.example.demo_ssr_v0.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -74,5 +76,15 @@ public class PurchaseService {
             return false;
         }
         return purchaseRepository.existsByUserIdAndBoardId(userId, boardId);
+    }
+
+    // 유료 게시글 구매 내역 조회(세션 유저 기준)
+    public List<PurchaseResponse.ListDTO> 구매내역조회(Long userId) {
+        List<Purchase> purchaseList = purchaseRepository.findAllByUserIdWithBoard(userId);
+
+        // 트랜잭션내에서 엔티티를 DTO로 변환
+        return purchaseList.stream()
+                .map(PurchaseResponse.ListDTO::new)
+                .toList();
     }
 }
