@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -19,4 +20,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.merchantUid = :merchantUid")
     boolean existsByMerchantUid(@Param("merchantUid") String merchantUid);
+
+    @Query("""
+    SELECT p FROM Payment p
+    LEFT JOIN FETCH p.user u
+    WHERE p.user.id = :userId
+    ORDER BY p.timestamp DESC
+""")
+    List<Payment> findAllByUserId(@Param("userId") Long userId);
 }
