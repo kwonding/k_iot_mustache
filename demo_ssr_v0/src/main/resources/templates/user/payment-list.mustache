@@ -1,16 +1,14 @@
 {{> layout/header}}
 
 <div class="container p-5">
+    <!-- 외부 카드-->
     <div class="card">
         <div class="card-header mb-0">
             <h4><b>결제 내역</b></h4>
         </div>
-        <!-- 외부 카드-->
         <div class="card-body">
-
         <!-- 내부 카드 (card-body)-->
                 {{#paymentList}}
-<!--            <div class="card mb-4">-->
                 <div class="card-body border rounded mb-4">
                     <div class="d-flex justify-content-between">
                         <div class="flex-grow-1">
@@ -26,26 +24,31 @@
                             </p>
                             <p class="text-muted mb-2">
                                 <i class="fas fa-circle-info"></i> 상태:
-                                <span class="badge bg-success fs-7">{{status}}</span>
+                                <span class="badge bg-success fs-7">{{statusDisplay}}</span>
                             </p>
                         </div>
                         <div class="text-end">
-                            <span class="badge bg-primary fs-6">+{{price}}</span>
+                            <span class="badge bg-primary fs-6">+{{amount}}</span>
+                            {{#isRefundable}}
+                            <!--  1번은 유저아이디-->
+                            <a href="/refund/request/{{id}}" class="btn btn-outline-danger btn-sm">환불하기</a>
+                            {{/isRefundable}}
                         </div>
                     </div>
                 </div>
                 {{/paymentList}}
-<!--            </div>-->
             <!-- 유료 결제 내역이 없을 경우-->
             {{^paymentList}}
             <div class="text-center py-5">
                 <i class="fas fa-hourglass fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">결제 내역이 없습니다</h5>
             </div>
+            {{/paymentList}}
             <div class="mt-4">
+                <a href="/refund/list" class="btn btn-info">
+                    <i class="fas fa-undo"></i> 환불 요청 내역</a>
                 <a href="/user/detail" class="btn btn-secondary">회원정보로 돌아가기</a>
             </div>
-            {{/paymentList}}
         </div>
     </div>
 </div>

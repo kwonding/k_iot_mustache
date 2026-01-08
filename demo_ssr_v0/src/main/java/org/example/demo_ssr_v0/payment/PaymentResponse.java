@@ -76,25 +76,39 @@ public class PaymentResponse {
         private String impUid;
         private String merchantUid;
         private String paidAt;
+        private Integer amount;
         private String status;
-        private Integer price;
+        private String statusDisplay;
 
-        public ListDTO(Payment payment) {
+        // 추가 예정 TODO
+        private Boolean isRefundable; // 환불 가능 여부 (화면 표시)
+
+        public ListDTO(Payment payment, Boolean isRefundable) {
             this.id = payment.getId();
             if (payment.getUser() != null) {
                 this.userId = payment.getUser().getId();
             }
             this.impUid = payment.getImpUid();
             this.merchantUid = payment.getMerchantUid();
+            this.amount = payment.getAmount();
+
             if (payment.getTimestamp() != null) {
                 this.paidAt = MyDateUtil.timestampFormat(payment.getTimestamp());
             }
+
             if (payment.getStatus().equals("paid")) {
-                this.status = "결제완료";
+                this.statusDisplay = "결제완료";
             } else {
-                this.status = "결제취소";
+                this.statusDisplay = "환불완료";
             }
-            this.price = payment.getAmount();
+
+            this.isRefundable = isRefundable != null ? isRefundable : false;
+        }
+
+        // 오버로딩
+        public ListDTO(Payment payment) {
+            //"paid".equals(payment.getStatus()) -- true, "cancelled"면 자동 false
+            this(payment, "paid".equals(payment.getStatus()));
         }
     }
 }

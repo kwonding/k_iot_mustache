@@ -28,4 +28,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     ORDER BY p.timestamp DESC
 """)
     List<Payment> findAllByUserId(@Param("userId") Long userId);
+
+    @Query("""
+    SELECT p FROM Payment p
+    LEFT JOIN FETCH p.user u
+    WHERE p.id = :id
+""")
+    Payment findByIdWithUser(@Param("id") Long paymentId);
 }
