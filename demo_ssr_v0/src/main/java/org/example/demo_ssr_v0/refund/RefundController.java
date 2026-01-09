@@ -36,7 +36,7 @@ public class RefundController {
     }
     // 환불요청기능
     @PostMapping("/refund/request")
-    @ResponseBody // 뷰 리졸브 안타고 데이터로 내릴거임
+    // @ResponseBody // 뷰 리졸브 안타고 데이터로 내릴거임
     public String refundRequest(RefundRequestDTO.RequestDTO reqDTO, HttpSession session) {
         User sessionUser = (User) session.getAttribute("sessionUser");
         if (sessionUser == null) {
@@ -46,6 +46,7 @@ public class RefundController {
         reqDTO.validate();
         // 서비스 호출
         refundService.환불요청(sessionUser.getId(), reqDTO);
+
         return "redirect:/refund/list";
     }
 
